@@ -1,0 +1,83 @@
+# ======================
+# Python
+# ======================
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ======================
+# Entornos virtuales
+# ======================
+
+.venv/
+venv/
+env/
+
+# ======================
+# Logs
+# ======================
+
+*.log
+debug.log
+
+# ======================
+# Editor / sistema
+# ======================
+
+.vscode/
+.DS_Store
+Thumbs.db
+
+# ======================
+# Temporales / respaldos
+# ======================
+
+*.tmp
+*.bak
+*.zip
+_archivo/
+
+# ======================
+# Configuración local
+# ======================
+
+/config.json
+
+# ======================
+# Salidas generadas
+# ======================
+
+/output/
+
+# ======================
+# Datos locales / producción
+# ======================
+
+/data/
+
+# ======================
+# Compatibilidad legacy eliminada
+# Solo carpetas viejas en raíz
+# ======================
+
+/motor/
+/catalogo/
+/categorias/
+/descripcion_etiquetas/
+/certificados/
+/fichas_tecnicas/
+/impresion/
+
+# ======================
+# Photoshop temporales
+# ======================
+
+*.psb
+
+# ======================
+# Excel generado
+# ======================
+
+*.xlsx

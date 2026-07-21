@@ -1,0 +1,7 @@
+{
+    "env": "DEV",
+    "categoria": "1-muebles_europeos_importados",
+    "paper": "carta",
+    "draw_guides": false,
+    "debug": true
+}

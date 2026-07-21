@@ -1,0 +1,229 @@
+{
+    "distribucion_1": {
+        "auto": true,
+        "psd": "templates/catalogo/distribuciones/distribucion_1.psd",
+        "paginas": 1,
+        "template_mesas": ["TEMPLATE_PRODUCTO_SIMPLE"],
+        "tipo_mesas": ["DISTRIBUCION_1"],
+        "capacidades": {
+            "DESCRIPCION_1": 1125
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL", "IMG_2", "IMG_3"]
+        },
+        "textos": {
+            "pagina_1": [
+                "NAME_PRODUCT",
+                "DESCRIPCION_1",
+                "MEDIDAS",
+                "NOTAS",
+                "TXT_PRECIO_FRONT"
+            ]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC", "AREA_MEDIDAS", "AREA_P_N"]
+        }
+    },
+
+    "distribucion_2": {
+        "auto": false,
+        "psd": "templates/catalogo/distribuciones/distribucion_2.psd",
+        "paginas": 2,
+        "template_mesas": [
+            "TEMPLATE_PRODUCT_DOUBLE_FIRST",
+            "TEMPLATE_PRODUCT_DOUBLE_SECOND"
+        ],
+        "tipo_mesas": ["DISTRIBUCION_2", "DISTRIBUCION_2"],
+        "capacidades": {
+            "DESCRIPCION_1": 575,
+            "DESCRIPCION_2": 710
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL", "IMG_2", "IMG_3"],
+            "pagina_2": ["IMG_4", "IMG_5", "IMG_6"]
+        },
+        "textos": {
+            "pagina_1": ["NAME_PRODUCT", "DESCRIPCION_1"],
+            "pagina_2": [
+                "DESCRIPCION_2",
+                "MEDIDAS",
+                "NOTAS",
+                "TXT_PRECIO_FRONT"
+            ]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC"],
+            "pagina_2": ["AREA_DESC_2", "AREA_MEDIDAS", "AREA_P_N"]
+        }
+    },
+
+    "distribucion_3": {
+        "auto": true,
+        "psd": "templates/catalogo/distribuciones/distribucion_3.psd",
+        "paginas": 1,
+        "template_mesas": ["TEMPLATE_PRODUCTO_SIMPLE"],
+        "tipo_mesas": ["DISTRIBUCION_3"],
+        "capacidades": {
+            "DESCRIPCION_1": 425,
+            "DESCRIPCION_2": 425
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL", "IMG_2", "IMG_3"]
+        },
+        "textos": {
+            "pagina_1": [
+                "NAME_PRODUCT",
+                "DESCRIPCION_1",
+                "DESCRIPCION_2",
+                "MEDIDAS",
+                "NOTAS",
+                "TXT_PRECIO_FRONT"
+            ]
+        },
+        "areas": {
+            "pagina_1": [
+                "AREA_NAME",
+                "AREA_DESC",
+                "AREA_DESC_2",
+                "AREA_MEDIDAS",
+                "AREA_P_N"
+            ]
+        }
+    },
+
+    "distribucion_4": {
+        "auto": false,
+        "psd": "templates/catalogo/distribuciones/distribucion_4.psd",
+        "paginas": 2,
+        "template_mesas": [
+            "TEMPLATE_PRODUCT_DOUBLE_FIRST",
+            "TEMPLATE_PRODUCT_DOUBLE_SECOND"
+        ],
+        "tipo_mesas": ["DISTRIBUCION_4", "DISTRIBUCION_4"],
+        "capacidades": {
+            "DESCRIPCION_1": 820
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL"],
+            "pagina_2": ["IMG_2", "IMG_3", "IMG_4", "IMG_5"]
+        },
+        "textos": {
+            "pagina_1": ["NAME_PRODUCT", "DESCRIPCION_1"],
+            "pagina_2": ["MEDIDAS", "NOTAS", "TXT_PRECIO_FRONT"]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC"],
+            "pagina_2": ["AREA_MEDIDAS", "AREA_P_N"]
+        }
+    },
+
+    "distribucion_5": {
+        "auto": true,
+        "psd": "templates/catalogo/distribuciones/distribucion_5.psd",
+        "paginas": 1,
+        "template_mesas": ["TEMPLATE_PRODUCTO_SIMPLE"],
+        "tipo_mesas": ["DISTRIBUCION_5"],
+        "capacidades": {
+            "DESCRIPCION_1": 520
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL", "IMG_2", "IMG_3"]
+        },
+        "textos": {
+            "pagina_1": [
+                "NAME_PRODUCT",
+                "DESCRIPCION_1",
+                "MEDIDAS",
+                "NOTAS",
+                "TXT_PRECIO_FRONT"
+            ]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC", "AREA_MEDIDAS", "AREA_P_N"]
+        }
+    },
+
+    "distribucion_6": {
+        "auto": false,
+        "psd": "templates/catalogo/distribuciones/distribucion_6.psd",
+        "paginas": 2,
+        "template_mesas": [
+            "TEMPLATE_PRODUCT_DOUBLE_FIRST",
+            "TEMPLATE_PRODUCT_DOUBLE_SECOND"
+        ],
+        "tipo_mesas": ["DISTRIBUCION_6", "DISTRIBUCION_6"],
+        "capacidades": {
+            "DESCRIPCION_1": 820
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL"],
+            "pagina_2": ["IMG_2", "IMG_3", "IMG_4", "IMG_5", "IMG_6"]
+        },
+        "textos": {
+            "pagina_1": ["NAME_PRODUCT", "DESCRIPCION_1"],
+            "pagina_2": ["MEDIDAS", "NOTAS", "TXT_PRECIO_FRONT"]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC"],
+            "pagina_2": ["AREA_MEDIDAS", "AREA_P_N"]
+        }
+    },
+    "distribucion_7": {
+        "auto": false,
+        "psd": "templates/catalogo/distribuciones/distribucion_7.psd",
+        "paginas": 2,
+        "template_mesas": [
+            "TEMPLATE_PRODUCT_DOUBLE_FIRST",
+            "TEMPLATE_PRODUCT_DOUBLE_SECOND"
+        ],
+        "tipo_mesas": ["DISTRIBUCION_7", "DISTRIBUCION_7"],
+        "capacidades": {
+            "DESCRIPCION_1": 1125
+        },
+        "margen": {
+            "porcentaje": 0.05,
+            "minimo": 15
+        },
+        "imagenes": {
+            "pagina_1": ["IMG_PRINCIPAL"],
+            "pagina_2": ["IMG_2", "IMG_3","IMG_4"]
+        },
+        "textos": {
+            "pagina_1": [
+                "NAME_PRODUCT",
+                "DESCRIPCION_1",
+                "MEDIDAS",
+                "NOTAS",
+                "TXT_PRECIO_FRONT"
+            ]
+        },
+        "areas": {
+            "pagina_1": ["AREA_NAME", "AREA_DESC", "AREA_MEDIDAS", "AREA_P_N"]
+        }
+    }
+}
+
