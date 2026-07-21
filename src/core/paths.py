@@ -181,7 +181,6 @@ class Config:
         # RUTAS DE CATÁLOGO
         # =========================
 
-        self.catalogo_legacy = self.root / "catalogo"
         self.fecha_exportacion_catalogo = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         
         self.catalogo_exportacion = self.output_catalogo
@@ -190,9 +189,11 @@ class Config:
         self.catalogo_final_pdf = self.output_catalogo / f"catalogo_{self.fecha_exportacion_catalogo}.pdf"
 
         # LEGACY: si algún módulo viejo todavía lo usa.
-        self.catalogo = self.catalogo_legacy
-        self.catalogo_psd = self.catalogo_legacy / "catalogo.psd"
-        self.catalogo_template_psd = self.templates_catalogo / "catalogo.psd"
+        # Catálogo
+        # El catálogo se construye desde plantillas por distribución y portadas.
+        self.catalogo = self.templates_catalogo
+        self.catalogo_distribuciones = self.templates_catalogo_distribuciones
+        self.catalogo_portadas = self.templates_catalogo_portadas
 
         # =========================
         # MODO DESARROLLO

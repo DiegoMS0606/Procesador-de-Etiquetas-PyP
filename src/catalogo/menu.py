@@ -564,7 +564,7 @@ def procesar_catalogo_uno():
     productos = cargar_productos_catalogo(config)
 
     print(f"\n--- GENERADOR DE CATÁLOGO TECI / {config.modo} ---")
-    print("Plantilla:", config.catalogo_psd)
+    print("Distribuciones:", config.templates_catalogo_distribuciones)
     print("Imágenes:", config.img)
 
     id_input = input("\nID del producto, ejemplo ACT-0002 o 2: ").strip()
@@ -688,7 +688,8 @@ def mostrar_menu_catalogo(config):
     print(f"Base: {config.base}")
     print(f"JSON: {config.processed / '1.json'}")
     print(f"Imágenes: {config.img}")
-    print(f"Catálogo PSD: {config.catalogo_psd}")
+    print(f"Distribuciones PSD: {config.templates_catalogo_distribuciones}")
+    print(f"Portadas PSD: {config.templates_catalogo_portadas}")
     print(f"Exportación: {config.catalogo_exportacion}")
 
     print("\n1 - Generar UN producto")
