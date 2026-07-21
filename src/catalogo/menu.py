@@ -559,6 +559,38 @@ def procesar_producto_catalogo(config, producto):
         return False
 
 
+def preguntar_exportar_catalogo_al_final():
+    """
+    Pregunta antes de generar si se debe exportar el catálogo
+    al terminar la generación.
+    """
+
+    opcion = (
+        input("\n¿Quieres exportar a PDF al terminar la generación? [S/N]: ")
+        .strip()
+        .lower()
+    )
+
+    return opcion in ["s", "si", "sí", "y", "yes"]
+
+
+def exportar_si_corresponde(exportar_al_final, generados):
+    """
+    Exporta solo si el usuario lo pidió antes de generar
+    y si realmente se generó al menos un producto.
+    """
+
+    if not exportar_al_final:
+        return
+
+    if generados <= 0:
+        print("\nNo se exportó porque no se generó ningún producto.")
+        return
+
+    print("\nExportando catálogo a PDF...")
+    exportar_catalogo_pdf()
+
+
 def procesar_catalogo_uno():
     config = get_config()
     productos = cargar_productos_catalogo(config)
@@ -568,6 +600,7 @@ def procesar_catalogo_uno():
     print("Imágenes:", config.img)
 
     id_input = input("\nID del producto, ejemplo ACT-0002 o 2: ").strip()
+    exportar_al_final = preguntar_exportar_catalogo_al_final()
 
     seleccion = seleccionar_por_ids(productos, [id_input])
 
@@ -575,12 +608,15 @@ def procesar_catalogo_uno():
         print("No encontré ese producto en el JSON.")
         return
 
+    generados = 0
     ok = procesar_producto_catalogo(config, seleccion[0])
 
     if ok:
         guardar_productos_catalogo(config, productos)
+        generados = 1
 
     print("\n✔ Proceso terminado.")
+    exportar_si_corresponde(exportar_al_final, generados)
 
 
 def procesar_catalogo_lote():
@@ -593,6 +629,8 @@ def procesar_catalogo_lote():
 
     inicio = input("ID inicial, ejemplo 2: ").strip()
     fin = input("ID final, ejemplo 8: ").strip()
+
+    exportar_al_final = preguntar_exportar_catalogo_al_final()
 
     try:
         inicio_num = int(inicio)
@@ -633,6 +671,7 @@ def procesar_catalogo_lote():
     print("\n--- RESUMEN ---")
     print(f"Generados: {generados}")
     print(f"Saltados/error: {saltados}")
+    exportar_si_corresponde(exportar_al_final, generados)
 
 
 def procesar_catalogo_ids_especificos():
@@ -646,6 +685,8 @@ def procesar_catalogo_ids_especificos():
     entrada = input("IDs a generar, ejemplo 2,5,8,12: ").strip()
 
     ids = [item.strip() for item in entrada.split(",") if item.strip()]
+
+    exportar_si_corresponde(exportar_al_final, generados)
 
     if not ids:
         print("❌ No escribiste IDs válidos.")
@@ -677,6 +718,7 @@ def procesar_catalogo_ids_especificos():
     print("\n--- RESUMEN ---")
     print(f"Generados: {generados}")
     print(f"Saltados/error: {saltados}")
+    exportar_al_final = preguntar_exportar_catalogo_al_final()
 
 
 def pausar():
