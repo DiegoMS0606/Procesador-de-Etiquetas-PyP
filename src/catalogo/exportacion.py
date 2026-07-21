@@ -8,7 +8,6 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.core.paths import get_config
 from src.catalogo.plantillas import cargar_distribuciones_catalogo
-from src.catalogo.validacion import validar_catalogo
 
 ROOT = Path(__file__).resolve().parents[2]
 JSX_EXPORT = ROOT / "src" / "catalogo" / "exportar_catalogo.jsx"
@@ -294,11 +293,6 @@ def agregar_numero_pagina(img, numero_pagina):
 
 
 def exportar_catalogo_pdf():
-    print("\nValidando catálogo antes de exportar...")
-
-    if not validar_catalogo(silencioso=False):
-        print("\n❌ Exportación cancelada. Corrige los errores del catálogo primero.")
-        return
     config = get_config()
 
     carpeta_paginas = config.catalogo_paginas
