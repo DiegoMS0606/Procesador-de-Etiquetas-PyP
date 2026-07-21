@@ -33,11 +33,22 @@ def formatear_ids(numeros):
     return ", ".join(f"ACT-{n:04d}" for n in sorted(numeros))
 
 
+def numero_categoria(path: Path):
+    match = re.match(r"^(\d+)", path.name)
+
+    if match:
+        return int(match.group(1))
+
+    return 9999
+
+
 def obtener_categorias():
     if not CATEGORIAS_ROOT.exists():
         return []
 
-    return sorted([p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir()])
+    categorias = [p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir()]
+
+    return sorted(categorias, key=lambda p: (numero_categoria(p), p.name.lower()))
 
 
 def analizar_categoria(categoria_path: Path):
