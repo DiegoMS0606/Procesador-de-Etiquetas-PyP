@@ -7,6 +7,8 @@ import win32com.client
 from PIL import Image, ImageDraw, ImageFont
 
 from src.core.paths import get_config
+from src.core.paths import get_config
+from src.core.productos import resolver_json_productos
 from src.catalogo.plantillas import cargar_distribuciones_catalogo
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -292,6 +294,59 @@ def agregar_numero_pagina(img, numero_pagina):
     return img
 
 
+def obtener_distribuciones_usadas(config):
+    """
+    Devuelve solo las distribuciones que tienen productos generados
+    en el JSON de la categoría actual.
+
+    Usa el campo:
+    - catalogo_generado = true
+    - catalogo_distribucion = distribucion_X
+    """
+
+    try:
+        json_path = resolver_json_productos(config)
+    except Exception as e:
+        print(f"⚠ No pude resolver JSON de productos: {e}")
+        return []
+
+    if not json_path.exists():
+        print(f"⚠ No existe JSON: {json_path}")
+        return []
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        productos = json.load(f)
+
+    if not isinstance(productos, list):
+        print("⚠ El JSON no contiene una lista de productos.")
+        return []
+
+    usadas = set()
+
+    for producto in productos:
+        if producto.get("catalogo_generado") is not True:
+            continue
+
+        nombre_distribucion = str(producto.get("catalogo_distribucion", "")).strip()
+
+        if not nombre_distribucion:
+            continue
+
+        if nombre_distribucion not in DISTRIBUCIONES_CATALOGO:
+            print(f"⚠ Distribución no válida en JSON: {nombre_distribucion}")
+            continue
+
+        usadas.add(nombre_distribucion)
+
+    def numero_distribucion(nombre):
+        try:
+            return int(str(nombre).split("_")[-1])
+        except Exception:
+            return 9999
+
+    return sorted(usadas, key=numero_distribucion)
+
+
 def exportar_catalogo_pdf():
     config = get_config()
 
@@ -341,9 +396,20 @@ def exportar_catalogo_pdf():
             archivos_ordenados.append(portada_png)
 
     # =========================
-    # 2. Exportar distribuciones
+    # 2. Exportar solo distribuciones usadas
     # =========================
-    for nombre_distribucion in DISTRIBUCIONES_CATALOGO.keys():
+    distribuciones_usadas = obtener_distribuciones_usadas(config)
+
+    if not distribuciones_usadas:
+        print("❌ No hay distribuciones usadas para exportar.")
+        print("Primero genera productos para catálogo.")
+        return
+
+    print("\n--- DISTRIBUCIONES A EXPORTAR ---")
+    for nombre in distribuciones_usadas:
+        print(f"- {nombre}")
+
+    for nombre_distribucion in distribuciones_usadas:
         carpeta_dist = tmp_dir / nombre_distribucion
         carpeta_dist.mkdir(parents=True, exist_ok=True)
 
@@ -367,7 +433,7 @@ def exportar_catalogo_pdf():
         destino = carpeta_paginas / nombre_final
 
         with Image.open(ruta_src) as img:
-            img_final = agregar_numero_pagina(img, i)
+            img_final = img.convert("RGB")
             img_final.save(destino)
 
     # =========================
