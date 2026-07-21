@@ -224,3 +224,45 @@ def seleccionar_por_ids(productos, ids_usuario):
             seleccion.append(producto)
 
     return seleccion
+
+
+def resolver_json_productos(config):
+    """
+    Resuelve el JSON principal de productos para la categoría/modo actual.
+
+    Prioridad:
+    1. processed/1.json
+    2. Si solo existe un .json en processed/, usar ese.
+    3. Si hay varios .json y no existe 1.json, pedir decisión manual.
+    """
+
+    json_default = config.processed / "1.json"
+
+    if json_default.exists():
+        return json_default
+
+    if not config.processed.exists():
+        raise FileNotFoundError(
+            f"No existe la carpeta de JSON procesados: {config.processed}"
+        )
+
+    jsons = sorted(config.processed.glob("*.json"))
+
+    if len(jsons) == 1:
+        return jsons[0]
+
+    if len(jsons) == 0:
+        raise FileNotFoundError(
+            "No hay ningún JSON de productos para esta categoría.\n"
+            f"Carpeta revisada: {config.processed}"
+        )
+
+    disponibles = "\n".join(f"  - {p.name}" for p in jsons)
+
+    raise FileNotFoundError(
+        "No existe processed/1.json y hay varios JSON disponibles.\n"
+        "No puedo decidir automáticamente cuál usar.\n\n"
+        f"Carpeta: {config.processed}\n"
+        f"JSON disponibles:\n{disponibles}\n\n"
+        "Solución rápida: renombra o copia el JSON correcto como 1.json."
+    )

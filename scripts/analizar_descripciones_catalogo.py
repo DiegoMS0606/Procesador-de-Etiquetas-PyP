@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.core.paths import get_config
 from src.core.productos import crear_id_catalogo
+from src.core.productos import resolver_json_productos
 
 from src.catalogo.menu import (
     DISTRIBUCIONES_CATALOGO,
@@ -29,7 +30,7 @@ def obtener_id_catalogo(producto):
 
 
 def cargar_productos(config):
-    json_path = config.processed / "1.json"
+    json_path = resolver_json_productos(config)
 
     if not json_path.exists():
         raise FileNotFoundError(f"No existe JSON: {json_path}")

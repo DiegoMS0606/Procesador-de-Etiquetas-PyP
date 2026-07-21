@@ -9,6 +9,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.core.paths import get_config
+from src.core.productos import resolver_json_productos
 
 
 def obtener_rango(chars):
@@ -29,7 +30,7 @@ def obtener_rango(chars):
 
 def main():
     config = get_config()
-    json_path = config.processed / "1.json"
+    json_path = resolver_json_productos(config)
 
     if not json_path.exists():
         print(f"No existe JSON: {json_path}")

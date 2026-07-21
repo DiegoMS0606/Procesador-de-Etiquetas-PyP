@@ -13,7 +13,7 @@ from src.core.productos import (
 )
 from src.etiquetas.photoshop import renderizar_front_back
 from src.etiquetas.plantillas import resolver_plantilla_producto
-
+from src.core.productos import resolver_json_productos
 
 def mostrar_configuracion_actual(config, json_data):
     print("\n--- CONFIGURACIÓN ACTUAL ETIQUETAS ---")
@@ -285,7 +285,7 @@ def decidir_modo_regeneracion_lote(seleccion, force=False):
 
 def procesar_todo():
     config = get_config()
-    json_data = config.processed / "1.json"
+    json_data = resolver_json_productos(config)
 
     mostrar_configuracion_actual(config, json_data)
     try:

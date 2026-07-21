@@ -3,14 +3,14 @@ import re
 from pathlib import Path
 
 from src.core.paths import get_config
-from src.core.productos import crear_id_catalogo, normalizar_numero_id
+from src.core.productos import crear_id_catalogo, normalizar_numero_id, resolver_json_productos
 
 
 EXTENSIONES_IMG = [".png", ".jpg", ".jpeg", ".webp"]
 
 
 def cargar_json_productos(config):
-    ruta_json = config.processed / "1.json"
+    ruta_json = resolver_json_productos(config)
 
     if not ruta_json.exists():
         return None, ruta_json
@@ -343,7 +343,7 @@ def validar_proyecto():
     print(f"Modo: {config.modo}")
     print(f"Categoría: {config.categoria}")
     print(f"Base: {config.base}")
-    print(f"JSON: {config.processed / '1.json'}")
+    print(f"JSON: {resolver_json_productos(config)}")
     print(f"Imágenes: {config.img}")
     print(f"Etiquetas: {config.output}")
 

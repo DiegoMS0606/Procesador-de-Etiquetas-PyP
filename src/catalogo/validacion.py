@@ -1,9 +1,10 @@
 import json
 from src.core.paths import get_config
+from src.core.productos import resolver_json_productos
 from src.catalogo.plantillas import cargar_distribuciones_catalogo
 
 def cargar_productos(config):
-    ruta_json = config.processed / "1.json"
+    ruta_json = resolver_json_productos(config)
 
     if not ruta_json.exists():
         raise FileNotFoundError(f"No existe JSON de productos: {ruta_json}")
@@ -139,7 +140,7 @@ def validar_catalogo(silencioso=False):
         print("\n--- VALIDACIÓN CATÁLOGO TECI ---")
         print(f"Modo: {config.modo}")
         print(f"Categoría: {config.categoria}")
-        print(f"JSON: {config.processed / '1.json'}")
+        print(f"JSON: {resolver_json_productos(config)}")
 
         print("\n--- RESUMEN ---")
         print(f"Distribuciones: {len(distribuciones)}")

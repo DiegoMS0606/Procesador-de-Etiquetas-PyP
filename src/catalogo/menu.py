@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 from src.core.paths import get_config
-from src.core.productos import seleccionar_por_ids, crear_id_catalogo
+from src.core.productos import seleccionar_por_ids, crear_id_catalogo, resolver_json_productos
 from src.catalogo.plantillas import cargar_distribuciones_catalogo
 from src.catalogo.texto import (
     distribuir_descripcion_en_cajas,
@@ -24,7 +24,7 @@ def cargar_productos_catalogo(config):
     """
     Por ahora en DEV usamos el JSON de pruebas.
     """
-    json_path = config.processed / "1.json"
+    json_path = resolver_json_productos(config)
 
     if not json_path.exists():
         raise FileNotFoundError(f"No existe el JSON: {json_path}")
@@ -43,7 +43,7 @@ def guardar_productos_catalogo(config, productos):
     Guarda cambios en el JSON de la categoría activa.
     """
 
-    json_path = config.processed / "1.json"
+    json_path = resolver_json_productos(config)
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(productos, f, ensure_ascii=False, indent=4)
@@ -257,7 +257,7 @@ def asignar_distribucion_producto():
 
     print(f"\n--- ASIGNAR DISTRIBUCIÓN / {config.modo} ---")
     print(f"Categoría: {config.categoria}")
-    print(f"JSON: {config.processed / '1.json'}")
+    print(f"JSON: {resolver_json_productos(config)}")
 
     mostrar_distribuciones_disponibles()
 
@@ -686,7 +686,7 @@ def pausar():
 def mostrar_menu_catalogo(config):
     print(f"\n--- CATÁLOGO TECI / {config.modo} ---")
     print(f"Base: {config.base}")
-    print(f"JSON: {config.processed / '1.json'}")
+    print(f"JSON: {resolver_json_productos(config)}")
     print(f"Imágenes: {config.img}")
     print(f"Distribuciones PSD: {config.templates_catalogo_distribuciones}")
     print(f"Portadas PSD: {config.templates_catalogo_portadas}")
