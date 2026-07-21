@@ -1,127 +1,197 @@
 from pathlib import Path
 import re
-import json
-import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CATEGORIAS_ROOT = PROJECT_ROOT / "data" / "categorias"
 
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+EXTENSIONES_IMAGEN = {".png", ".jpg", ".jpeg", ".webp"}
 
-from src.core.paths import get_config
-from src.core.productos import resolver_json_productos
+CARPETAS_REQUERIDAS = [
+    "img",
+    "processed",
+    "etiquetas",
+    "impresion",
+]
 
-EXTENSIONES = {".png", ".jpg", ".jpeg", ".webp"}
-
-
-def cargar_productos(config):
-    try:
-        json_path = resolver_json_productos(config)
-    except FileNotFoundError as e:
-        print(f"\n⚠ {e}")
-        return []
-
-    print(f"JSON usado: {json_path}")
-
-    with open(json_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+PATRON_ACT = re.compile(r"^ACT-\d{4}$", re.IGNORECASE)
+PATRON_GALERIA = re.compile(r"^\d+$")
 
 
-def imagenes_sueltas(carpeta_img):
-    if not carpeta_img.exists():
-        return []
-
-    return sorted(
-        p
-        for p in carpeta_img.iterdir()
-        if p.is_file() and p.suffix.lower() in EXTENSIONES
-    )
+def es_imagen(path):
+    return path.is_file() and path.suffix.lower() in EXTENSIONES_IMAGEN
 
 
-def analizar_nombre(path):
-    stem = path.stem.lower()
+def revisar_categoria(categoria_path):
+    errores = []
+    advertencias = []
 
-    match = re.fullmatch(r"(\d+)(h?)", stem)
+    # 1. Carpetas base requeridas
+    for carpeta in CARPETAS_REQUERIDAS:
+        ruta = categoria_path / carpeta
 
-    if not match:
-        return None
+        if not ruta.exists():
+            errores.append(f"Falta carpeta: {carpeta}/")
+        elif not ruta.is_dir():
+            errores.append(f"No es carpeta: {carpeta}/")
 
-    numero = int(match.group(1))
-    horizontal = bool(match.group(2))
+    img_root = categoria_path / "img"
+
+    carpetas_act = []
+    imagenes_sueltas = []
+    carpetas_mal_nombradas = []
+    carpetas_sin_principal = []
+    carpetas_vacias = []
+    archivos_raros_en_act = []
+
+    if img_root.exists() and img_root.is_dir():
+        for item in sorted(img_root.iterdir()):
+            if item.is_file():
+                if es_imagen(item):
+                    imagenes_sueltas.append(item.name)
+                else:
+                    advertencias.append(f"Archivo no imagen en img/: {item.name}")
+
+            elif item.is_dir():
+                if PATRON_ACT.match(item.name):
+                    carpetas_act.append(item)
+                else:
+                    carpetas_mal_nombradas.append(item.name)
+
+        # 2. Revisar cada carpeta ACT
+        for act_dir in carpetas_act:
+            archivos = [p for p in act_dir.iterdir() if p.is_file()]
+
+            if not archivos:
+                carpetas_vacias.append(act_dir.name)
+                continue
+
+            principales = [
+                act_dir / "principal.png",
+                act_dir / "principal.jpg",
+                act_dir / "principal.jpeg",
+                act_dir / "principal.webp",
+            ]
+
+            if not any(p.exists() for p in principales):
+                carpetas_sin_principal.append(act_dir.name)
+
+            for archivo in archivos:
+                if not es_imagen(archivo):
+                    archivos_raros_en_act.append(f"{act_dir.name}/{archivo.name}")
+                    continue
+
+                stem = archivo.stem.lower()
+
+                if stem == "principal":
+                    continue
+
+                if not PATRON_GALERIA.match(stem):
+                    archivos_raros_en_act.append(f"{act_dir.name}/{archivo.name}")
+
+    else:
+        errores.append("Falta carpeta img/ o no es carpeta")
 
     return {
-        "numero": numero,
-        "horizontal": horizontal,
-        "archivo": path.name,
+        "categoria": categoria_path.name,
+        "errores": errores,
+        "advertencias": advertencias,
+        "carpetas_act": carpetas_act,
+        "imagenes_sueltas": imagenes_sueltas,
+        "carpetas_mal_nombradas": carpetas_mal_nombradas,
+        "carpetas_sin_principal": carpetas_sin_principal,
+        "carpetas_vacias": carpetas_vacias,
+        "archivos_raros_en_act": archivos_raros_en_act,
     }
+
+
+def imprimir_lista(titulo, items, limite=20):
+    if not items:
+        return
+
+    print(f"\n  {titulo}: {len(items)}")
+
+    for item in items[:limite]:
+        print(f"    - {item}")
+
+    if len(items) > limite:
+        print(f"    ... y {len(items) - limite} más")
 
 
 def main():
-    config = get_config()
-    productos = cargar_productos(config)
-    sueltas = imagenes_sueltas(config.img)
-
-    if not productos:
-        print("\n=== DIAGNÓSTICO DE IMÁGENES SUELTAS ===")
-        print(f"Modo: {config.modo}")
-        print(f"Categoría: {config.categoria}")
-        print(f"Carpeta imágenes: {config.img}")
-        print(f"Imágenes sueltas: {len(sueltas)}")
-
-        if sueltas:
-            print("\n--- IMÁGENES SUELTAS DETECTADAS ---")
-            for img in sueltas:
-                print(f"- {img.name}")
-
-        print("\nNo se puede proponer asignación porque falta el JSON de productos.")
-        print("No se movió ningún archivo.")
+    if not CATEGORIAS_ROOT.exists():
+        print(f"No existe la carpeta de categorías: {CATEGORIAS_ROOT}")
         return
 
-    productos_por_id = {
-        int(p["id"]): p for p in productos if str(p.get("id", "")).isdigit()
-    }
+    categorias = sorted(p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir())
 
+    print("\n=== DIAGNÓSTICO DE ESTRUCTURA DE CATEGORÍAS ===")
+    print(f"Raíz: {CATEGORIAS_ROOT}")
+    print(f"Categorías encontradas: {len(categorias)}")
 
-    print("\n=== DIAGNÓSTICO DE IMÁGENES SUELTAS ===")
-    print(f"Modo: {config.modo}")
-    print(f"Categoría: {config.categoria}")
-    print(f"Carpeta imágenes: {config.img}")
-    print(f"Imágenes sueltas: {len(sueltas)}")
+    total_errores = 0
+    total_advertencias = 0
 
-    print("\n--- POSIBLES ASIGNACIONES DIRECTAS ---")
+    for categoria in categorias:
+        resultado = revisar_categoria(categoria)
 
-    ambiguas = []
-    desconocidas = []
+        errores = resultado["errores"]
+        advertencias = resultado["advertencias"]
 
-    for img in sueltas:
-        info = analizar_nombre(img)
+        total_errores += len(errores)
+        total_advertencias += len(advertencias)
 
-        if not info:
-            desconocidas.append(img.name)
-            continue
+        total_act = len(resultado["carpetas_act"])
+        total_sueltas = len(resultado["imagenes_sueltas"])
+        total_mal = len(resultado["carpetas_mal_nombradas"])
+        total_sin_principal = len(resultado["carpetas_sin_principal"])
+        total_vacias = len(resultado["carpetas_vacias"])
+        total_raros = len(resultado["archivos_raros_en_act"])
 
-        numero = info["numero"]
+        estado = "OK"
 
-        if numero in productos_por_id:
-            producto = productos_por_id[numero]
-            id_catalogo = producto.get("id_catalogo", f"ACT-{numero:04d}")
+        if errores:
+            estado = "ERROR"
+        elif (
+            total_sueltas
+            or total_mal
+            or total_sin_principal
+            or total_vacias
+            or total_raros
+            or advertencias
+        ):
+            estado = "ADVERTENCIA"
 
-            print(f"{img.name}  →  {id_catalogo}/principal{img.suffix.lower()}")
-        else:
-            ambiguas.append(img.name)
+        print("\n" + "=" * 70)
+        print(f"{resultado['categoria']}  [{estado}]")
+        print("-" * 70)
+        print(f"Carpetas ACT: {total_act}")
+        print(f"Imágenes sueltas en img/: {total_sueltas}")
+        print(f"Carpetas mal nombradas: {total_mal}")
+        print(f"Carpetas ACT sin principal: {total_sin_principal}")
+        print(f"Carpetas ACT vacías: {total_vacias}")
+        print(f"Archivos raros dentro de ACT: {total_raros}")
 
-    if ambiguas:
-        print("\n--- ARCHIVOS NUMÉRICOS SIN PRODUCTO DIRECTO ---")
-        for item in ambiguas:
-            print(f"- {item}")
+        imprimir_lista("ERRORES", errores)
+        imprimir_lista("ADVERTENCIAS", advertencias)
+        imprimir_lista("Imágenes sueltas", resultado["imagenes_sueltas"])
+        imprimir_lista("Carpetas mal nombradas", resultado["carpetas_mal_nombradas"])
+        imprimir_lista(
+            "Carpetas ACT sin principal", resultado["carpetas_sin_principal"]
+        )
+        imprimir_lista("Carpetas ACT vacías", resultado["carpetas_vacias"])
+        imprimir_lista(
+            "Archivos raros dentro de ACT", resultado["archivos_raros_en_act"]
+        )
 
-    if desconocidas:
-        print("\n--- ARCHIVOS CON NOMBRE NO RECONOCIDO ---")
-        for item in desconocidas:
-            print(f"- {item}")
-
+    print("\n" + "=" * 70)
+    print("RESUMEN GENERAL")
+    print("=" * 70)
+    print(f"Categorías revisadas: {len(categorias)}")
+    print(f"Errores de estructura base: {total_errores}")
+    print(f"Advertencias generales: {total_advertencias}")
     print("\nNo se movió ningún archivo.")
 
 
 if __name__ == "__main__":
+
     main()
