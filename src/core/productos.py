@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import re
 
 EXT_IMAGENES_PROCESADAS = [".png"]
 EXT_IMAGENES_FALLBACK = [".jpg", ".jpeg", ".webp"]
@@ -246,7 +246,7 @@ def resolver_json_productos(config):
             f"No existe la carpeta de JSON procesados: {config.processed}"
         )
 
-    jsons = sorted(config.processed.glob("*.json"))
+    jsons = ordenar_por_numero_inicial(list(config.processed.glob("*.json")))
 
     if len(jsons) == 1:
         return jsons[0]
@@ -265,4 +265,39 @@ def resolver_json_productos(config):
         f"Carpeta: {config.processed}\n"
         f"JSON disponibles:\n{disponibles}\n\n"
         "Solución rápida: renombra o copia el JSON correcto como 1.json."
+    )
+
+
+def numero_inicial(nombre):
+    """
+    Extrae el número inicial de un texto.
+
+    Ejemplos:
+    1-muebles -> 1
+    10-refinamiento -> 10
+    ACT-0007 -> 7
+    """
+    texto = str(nombre)
+
+    match_act = re.match(r"^ACT-(\d+)", texto, re.IGNORECASE)
+    if match_act:
+        return int(match_act.group(1))
+
+    match_num = re.match(r"^(\d+)", texto)
+    if match_num:
+        return int(match_num.group(1))
+
+    return 999999
+
+
+def ordenar_por_numero_inicial(items):
+    """
+    Ordena paths o strings por número inicial.
+    """
+    return sorted(
+        items,
+        key=lambda item: (
+            numero_inicial(item.name if isinstance(item, Path) else item),
+            str(item.name if isinstance(item, Path) else item).lower(),
+        ),
     )

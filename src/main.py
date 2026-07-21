@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import sys
+from src.core.productos import ordenar_por_numero_inicial
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_FILE = ROOT / "config.json"
@@ -72,7 +73,7 @@ def listar_categorias():
         if p.is_dir()
     ]
 
-    return sorted(categorias)
+    return ordenar_por_numero_inicial(categorias)
 
 
 def cambiar_modo():

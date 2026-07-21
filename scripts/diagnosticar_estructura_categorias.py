@@ -6,6 +6,17 @@ CATEGORIAS_ROOT = PROJECT_ROOT / "data" / "categorias"
 
 EXTENSIONES_IMAGEN = {".png", ".jpg", ".jpeg", ".webp"}
 
+
+
+def numero_categoria(path):
+    match = re.match(r"^(\d+)", path.name)
+
+    if match:
+        return int(match.group(1))
+
+    return 999999
+
+
 CARPETAS_REQUERIDAS = [
     "img",
     "processed",
@@ -44,7 +55,7 @@ def revisar_categoria(categoria_path):
     archivos_raros_en_act = []
 
     if img_root.exists() and img_root.is_dir():
-        for item in sorted(img_root.iterdir()):
+        for item in sorted(img_root.iterdir(), key=lambda p: (numero_categoria(p), p.name.lower())):
             if item.is_file():
                 if es_imagen(item):
                     imagenes_sueltas.append(item.name)
@@ -122,7 +133,10 @@ def main():
         print(f"No existe la carpeta de categorías: {CATEGORIAS_ROOT}")
         return
 
-    categorias = sorted(p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir())
+    categorias = sorted(
+        [p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir()],
+        key=lambda p: (numero_categoria(p), p.name.lower()),
+    )
 
     print("\n=== DIAGNÓSTICO DE ESTRUCTURA DE CATEGORÍAS ===")
     print(f"Raíz: {CATEGORIAS_ROOT}")

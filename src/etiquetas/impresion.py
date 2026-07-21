@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from src.core.paths import get_config
 from src.core.productos import crear_id_catalogo
+from src.core.productos import ordenar_por_numero_inicial
 
 
 DPI = 300
@@ -82,11 +83,13 @@ def listar_categorias_disponibles(config):
     if not carpeta_categorias.exists():
         return []
 
-    return sorted([
+    return [
         p.name
-        for p in carpeta_categorias.iterdir()
-        if p.is_dir()
-    ])
+        for p in ordenar_por_numero_inicial([
+            p for p in carpeta_categorias.iterdir()
+            if p.is_dir()
+        ])
+    ]
 
 
 def obtener_rutas_categoria(config, nombre_categoria):

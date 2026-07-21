@@ -1,8 +1,22 @@
+import re
 from pathlib import Path
 
 
 EXT_IMAGENES = {".png", ".jpg", ".jpeg", ".webp"}
 
+
+
+def clave_imagen_numerica(path):
+    """
+    Ordena imágenes secundarias como 1, 2, 3, 10
+    en vez de 1, 10, 2.
+    """
+    match = re.match(r"^(\d+)", path.stem)
+
+    if match:
+        return int(match.group(1)), path.name.lower()
+
+    return 999999, path.name.lower()
 
 def normalizar_ruta(path):
     if not path:
@@ -63,7 +77,7 @@ def listar_secundarias(carpeta_producto, principal):
 
         secundarias.append(archivo)
 
-    secundarias.sort(key=lambda p: p.name.lower())
+    secundarias.sort(key=clave_imagen_numerica)
 
     return secundarias
 

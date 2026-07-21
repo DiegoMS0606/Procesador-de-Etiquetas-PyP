@@ -1,7 +1,19 @@
 from pathlib import Path
+import re
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CATEGORIAS_ROOT = PROJECT_ROOT / "data" / "categorias"
+
+
+
+def numero_categoria(path):
+    match = re.match(r"^(\d+)", path.name)
+
+    if match:
+        return int(match.group(1))
+
+    return 999999
+
 
 CARPETAS_REQUERIDAS = [
     "img",
@@ -16,7 +28,10 @@ def main():
         print(f"No existe: {CATEGORIAS_ROOT}")
         return
 
-    categorias = sorted(p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir())
+    categorias = sorted(
+        [p for p in CATEGORIAS_ROOT.iterdir() if p.is_dir()],
+        key=lambda p: (numero_categoria(p), p.name.lower()),
+    )
 
     print("\n=== CREAR ESTRUCTURA BASE DE CATEGORÍAS ===")
     print(f"Raíz: {CATEGORIAS_ROOT}")

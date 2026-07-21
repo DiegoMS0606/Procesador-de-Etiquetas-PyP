@@ -70,7 +70,7 @@ def analizar_categoria(categoria_path: Path):
 
     usados = set()
 
-    for item in sorted(img_dir.iterdir()):
+    for item in sorted(img_dir.iterdir(), key=lambda p: (numero_categoria(p), p.name.lower())):
         if not item.is_dir():
             continue
 
