@@ -20,6 +20,7 @@ CARPETAS_REQUERIDAS = [
     "processed",
     "etiquetas",
     "impresion",
+    "control",
 ]
 
 

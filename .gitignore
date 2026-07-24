@@ -81,3 +81,20 @@ _archivo/
 # ======================
 
 *.xlsx
+
+# Plantillas Photoshop reales / privadas
+/templates/**/*.psd
+/templates/**/*.psb
+
+# Salidas generadas
+/output/
+
+# Datos locales / producción
+/data/
+
+# Temporales
+*.zip
+__pycache__/
+*.pyc
+debug.log
+*.log
