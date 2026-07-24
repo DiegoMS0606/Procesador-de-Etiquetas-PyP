@@ -142,6 +142,8 @@ def generar_pendientes_catalogo():
         "\n¿Generar todos los pendientes? Escribe SI para continuar: "
     ).strip()
 
+    exportar_al_final = preguntar_exportar_catalogo_al_final()
+    ids_generados = []
     if confirmar.upper() != "SI":
         print("Operación cancelada.")
         return
@@ -154,6 +156,7 @@ def generar_pendientes_catalogo():
 
         if ok:
             generados += 1
+            ids_generados.append(producto["id_catalogo"])
         else:
             saltados += 1
 
@@ -163,6 +166,7 @@ def generar_pendientes_catalogo():
     print("\n--- RESUMEN PENDIENTES ---")
     print(f"Generados: {generados}")
     print(f"Saltados/error: {saltados}")
+    exportar_si_corresponde(exportar_al_final, ids_generados)
 
 
 def marcar_producto_pendiente_catalogo():
@@ -558,22 +562,6 @@ def procesar_producto_catalogo(config, producto):
         print(f"❌ Error generando catálogo para {id_catalogo}: {e}")
         return False
 
-
-def preguntar_exportar_catalogo_al_final():
-    """
-    Pregunta antes de generar si se debe exportar el catálogo
-    al terminar la generación.
-    """
-
-    opcion = (
-        input("\n¿Quieres exportar a PDF al terminar la generación? [S/N]: ")
-        .strip()
-        .lower()
-    )
-
-    return opcion in ["s", "si", "sí", "y", "yes"]
-
-
 def exportar_si_corresponde(exportar_al_final, generados):
     """
     Exporta solo si el usuario lo pidió antes de generar
@@ -591,6 +579,60 @@ def exportar_si_corresponde(exportar_al_final, generados):
     exportar_catalogo_pdf()
 
 
+def preguntar_exportar_catalogo_al_final():
+    """
+    Pregunta antes de generar si se debe exportar al terminar.
+    La exportación automática será sin portada y solo con esos IDs.
+    """
+
+    opcion = (
+        input(
+            "\n¿Quieres exportar a PDF al terminar la generación? "
+            "(solo estos productos, sin portada) [S/N]: "
+        )
+        .strip()
+        .lower()
+    )
+
+    return opcion in ["s", "si", "sí", "y", "yes"]
+
+def exportar_catalogo_manual():
+    """
+    Exportación manual desde la opción 4.
+    Permite exportar todo o IDs específicos.
+    """
+
+    print("\n--- EXPORTAR CATÁLOGO A PDF ---")
+    print("1. Exportar todo el catálogo generado")
+    print("2. Exportar IDs específicos")
+    print("0. Volver")
+
+    opcion = input("\nSelecciona opción: ").strip()
+
+    if opcion == "1":
+        exportar_catalogo_pdf()
+        return
+
+    if opcion == "2":
+        entrada = input("IDs a exportar, ejemplo 2,5,8 o ACT-0002, ACT-0005: ").strip()
+
+        ids = [
+            item.strip() for item in entrada.replace(",", " ").split() if item.strip()
+        ]
+
+        if not ids:
+            print("❌ No escribiste IDs válidos.")
+            return
+
+        exportar_catalogo_pdf(ids_catalogo=ids)
+        return
+
+    if opcion == "0":
+        return
+
+    print("Opción inválida.")
+
+
 def procesar_catalogo_uno():
     config = get_config()
     productos = cargar_productos_catalogo(config)
@@ -600,10 +642,11 @@ def procesar_catalogo_uno():
     print("Imágenes:", config.img)
 
     id_input = input("\nID del producto, ejemplo ACT-0002 o 2: ").strip()
+
     exportar_al_final = preguntar_exportar_catalogo_al_final()
 
     seleccion = seleccionar_por_ids(productos, [id_input])
-
+    ids_generados = []
     if not seleccion:
         print("No encontré ese producto en el JSON.")
         return
@@ -614,9 +657,10 @@ def procesar_catalogo_uno():
     if ok:
         guardar_productos_catalogo(config, productos)
         generados = 1
+        ids_generados.append(seleccion[0]["id_catalogo"])
 
     print("\n✔ Proceso terminado.")
-    exportar_si_corresponde(exportar_al_final, generados)
+    exportar_si_corresponde(exportar_al_final, ids_generados)
 
 
 def procesar_catalogo_lote():
@@ -631,6 +675,7 @@ def procesar_catalogo_lote():
     fin = input("ID final, ejemplo 8: ").strip()
 
     exportar_al_final = preguntar_exportar_catalogo_al_final()
+    ids_generados = []
 
     try:
         inicio_num = int(inicio)
@@ -662,6 +707,7 @@ def procesar_catalogo_lote():
 
         if ok:
             generados += 1
+            ids_generados.append(producto["id_catalogo"])
         else:
             saltados += 1
 
@@ -671,7 +717,7 @@ def procesar_catalogo_lote():
     print("\n--- RESUMEN ---")
     print(f"Generados: {generados}")
     print(f"Saltados/error: {saltados}")
-    exportar_si_corresponde(exportar_al_final, generados)
+    exportar_si_corresponde(exportar_al_final, ids_generados)
 
 
 def procesar_catalogo_ids_especificos():
@@ -686,7 +732,8 @@ def procesar_catalogo_ids_especificos():
 
     ids = [item.strip() for item in entrada.split(",") if item.strip()]
 
-    exportar_si_corresponde(exportar_al_final, generados)
+    exportar_al_final = preguntar_exportar_catalogo_al_final()
+    ids_generados = []
 
     if not ids:
         print("❌ No escribiste IDs válidos.")
@@ -709,6 +756,7 @@ def procesar_catalogo_ids_especificos():
 
         if ok:
             generados += 1
+            ids_generados.append(producto["id_catalogo"])
         else:
             saltados += 1
 
@@ -718,7 +766,7 @@ def procesar_catalogo_ids_especificos():
     print("\n--- RESUMEN ---")
     print(f"Generados: {generados}")
     print(f"Saltados/error: {saltados}")
-    exportar_al_final = preguntar_exportar_catalogo_al_final()
+    exportar_si_corresponde(exportar_al_final, ids_generados)
 
 
 def pausar():
@@ -765,7 +813,7 @@ def main():
             pausar()
 
         elif opcion == "4":
-            exportar_catalogo_pdf()
+            exportar_catalogo_manual()
             pausar()
 
         elif opcion == "5":

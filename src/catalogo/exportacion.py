@@ -7,7 +7,6 @@ import win32com.client
 from PIL import Image, ImageDraw, ImageFont
 
 from src.core.paths import get_config
-from src.core.paths import get_config
 from src.core.productos import resolver_json_productos
 from src.catalogo.plantillas import cargar_distribuciones_catalogo
 
@@ -107,7 +106,7 @@ def exportar_portada_psd(ruta_portada_psd, carpeta_salida):
     print(resultado)
 
 
-def exportar_distribucion_psd(nombre_distribucion, carpeta_salida):
+def exportar_distribucion_psd(nombre_distribucion, carpeta_salida, ids_objetivo=None):
     data = DISTRIBUCIONES_CATALOGO[nombre_distribucion]
     ruta_psd = data["psd"]
 
@@ -122,13 +121,19 @@ def exportar_distribucion_psd(nombre_distribucion, carpeta_salida):
         delete=False,
         encoding="utf-8"
     ) as tmp:
-        json.dump({
-            "template_path": normalizar_ruta(ruta_psd),
-            "output_dir": normalizar_ruta(carpeta_salida),
-            "template_mesa": data["template_mesas"][0],
-            "tipo_mesa": f"CAT{obtener_numero_categoria(config):02d}",
-            "export_mode": "productos",
-        }, tmp, ensure_ascii=False, indent=2)
+        json.dump(
+            {
+                "template_path": normalizar_ruta(ruta_psd),
+                "output_dir": normalizar_ruta(carpeta_salida),
+                "template_mesa": data["template_mesas"][0],
+                "tipo_mesa": f"CAT{obtener_numero_categoria(config):02d}",
+                "export_mode": "productos",
+                "ids_catalogo": sorted(ids_objetivo) if ids_objetivo else [],
+            },
+            tmp,
+            ensure_ascii=False,
+            indent=2,
+        )
 
         ruta_config = tmp.name
 
@@ -294,15 +299,78 @@ def agregar_numero_pagina(img, numero_pagina):
     return img
 
 
-def obtener_distribuciones_usadas(config):
+def normalizar_id_catalogo(valor):
     """
-    Devuelve solo las distribuciones que tienen productos generados
-    en el JSON de la categoría actual.
+    Convierte 2, "2" o "ACT-0002" a "ACT-0002".
+    """
 
-    Usa el campo:
-    - catalogo_generado = true
-    - catalogo_distribucion = distribucion_X
+    valor = str(valor or "").strip().upper()
+
+    if not valor:
+        return ""
+
+    if valor.startswith("ACT-"):
+        try:
+            numero = int(valor.replace("ACT-", ""))
+            return f"ACT-{numero:04d}"
+        except ValueError:
+            return valor
+
+    if valor.isdigit():
+        return f"ACT-{int(valor):04d}"
+
+    return valor
+
+
+def normalizar_ids_catalogo(ids_catalogo):
     """
+    Recibe None, string o lista y devuelve set de IDs ACT-000X.
+    """
+
+    if not ids_catalogo:
+        return set()
+
+    if isinstance(ids_catalogo, str):
+        ids_catalogo = [
+            item.strip()
+            for item in ids_catalogo.replace(",", " ").split()
+            if item.strip()
+        ]
+
+    return {
+        normalizar_id_catalogo(item)
+        for item in ids_catalogo
+        if normalizar_id_catalogo(item)
+    }
+
+
+def pagina_pertenece_a_ids(ruta_png, ids_objetivo):
+    """
+    Filtra PNG exportados para dejar solo los IDs solicitados.
+    Si ids_objetivo está vacío, acepta todo.
+    """
+
+    if not ids_objetivo:
+        return True
+
+    info = extraer_info_pagina_catalogo(ruta_png)
+
+    if info["id"] == 999999:
+        return False
+
+    id_catalogo = f"ACT-{info['id']:04d}"
+
+    return id_catalogo in ids_objetivo
+
+
+def obtener_distribuciones_usadas(config, ids_catalogo=None):
+    """
+    Devuelve solo las distribuciones que tienen productos generados.
+
+    Si ids_catalogo viene con valores, limita la exportación a esos productos.
+    """
+
+    ids_objetivo = normalizar_ids_catalogo(ids_catalogo)
 
     try:
         json_path = resolver_json_productos(config)
@@ -322,8 +390,16 @@ def obtener_distribuciones_usadas(config):
         return []
 
     usadas = set()
+    encontrados = set()
 
     for producto in productos:
+        id_catalogo = normalizar_id_catalogo(
+            producto.get("id_catalogo") or producto.get("id")
+        )
+
+        if ids_objetivo and id_catalogo not in ids_objetivo:
+            continue
+
         if producto.get("catalogo_generado") is not True:
             continue
 
@@ -337,6 +413,15 @@ def obtener_distribuciones_usadas(config):
             continue
 
         usadas.add(nombre_distribucion)
+        encontrados.add(id_catalogo)
+
+    if ids_objetivo:
+        faltantes = sorted(ids_objetivo - encontrados)
+
+        if faltantes:
+            print("\n⚠ IDs solicitados no encontrados como catálogo generado:")
+            for item in faltantes:
+                print(f"  - {item}")
 
     def numero_distribucion(nombre):
         try:
@@ -347,8 +432,10 @@ def obtener_distribuciones_usadas(config):
     return sorted(usadas, key=numero_distribucion)
 
 
-def exportar_catalogo_pdf():
+def exportar_catalogo_pdf(ids_catalogo=None, preguntar_portada=True):
     config = get_config()
+
+    ids_objetivo = normalizar_ids_catalogo(ids_catalogo)
 
     carpeta_paginas = config.catalogo_paginas
     ruta_pdf = config.catalogo_final_pdf
@@ -370,13 +457,18 @@ def exportar_catalogo_pdf():
     # =========================
     # 1. Elegir portada
     # =========================
-    print("\n--- PORTADAS DISPONIBLES ---")
-    print("0 - Sin portada")
-    print("1 - portada_1")
-    print("2 - portada_2")
-    print("3 - portada_3")
+    opcion_portada = "0"
 
-    opcion_portada = input("Selecciona portada: ").strip()
+    if preguntar_portada:
+        print("\n--- PORTADAS DISPONIBLES ---")
+        print("0 - Sin portada")
+        print("1 - portada_1")
+        print("2 - portada_2")
+        print("3 - portada_3")
+
+        opcion_portada = input("Selecciona portada: ").strip()
+    else:
+        print("\nExportación automática: sin portada.")
 
     archivos_ordenados = []
     archivos_productos = []
@@ -398,7 +490,10 @@ def exportar_catalogo_pdf():
     # =========================
     # 2. Exportar solo distribuciones usadas
     # =========================
-    distribuciones_usadas = obtener_distribuciones_usadas(config)
+    distribuciones_usadas = obtener_distribuciones_usadas(
+        config,
+        ids_catalogo=ids_objetivo,
+    )
 
     if not distribuciones_usadas:
         print("❌ No hay distribuciones usadas para exportar.")
@@ -413,11 +508,18 @@ def exportar_catalogo_pdf():
         carpeta_dist = tmp_dir / nombre_distribucion
         carpeta_dist.mkdir(parents=True, exist_ok=True)
 
-        exportar_distribucion_psd(nombre_distribucion, carpeta_dist)
+        exportar_distribucion_psd(
+            nombre_distribucion,
+            carpeta_dist,
+            ids_objetivo=ids_objetivo,
+        )
 
-        pngs = list(carpeta_dist.glob("*.png"))
+        pngs = [
+            p for p in carpeta_dist.glob("*.png")
+            if pagina_pertenece_a_ids(p, ids_objetivo)
+        ]
+
         archivos_productos.extend(pngs)
-
     archivos_productos_ordenados = ordenar_paginas_catalogo(archivos_productos)
     archivos_ordenados.extend(archivos_productos_ordenados)
 

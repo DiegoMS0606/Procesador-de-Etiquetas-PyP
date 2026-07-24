@@ -58,6 +58,83 @@ function limpiarNombreArchivo(nombre) {
 }
 
 
+function normalizarIdCatalogo(valor) {
+    valor = String(valor || "").toUpperCase();
+
+    var match = valor.match(/ACT-(\d+)/);
+
+    if (!match) {
+        return "";
+    }
+
+    var numero = parseInt(match[1], 10);
+
+    if (isNaN(numero)) {
+        return "";
+    }
+
+    var padded = ("0000" + numero).slice(-4);
+
+    return "ACT-" + padded;
+}
+
+
+function crearSetIds(ids) {
+    var set = {};
+
+    if (!ids || !ids.length) {
+        return set;
+    }
+
+    for (var i = 0; i < ids.length; i++) {
+        var id = normalizarIdCatalogo(ids[i]);
+
+        if (id) {
+            set[id] = true;
+        }
+    }
+
+    return set;
+}
+
+
+function tieneFiltroIds(idsPermitidos) {
+    for (var key in idsPermitidos) {
+        return true;
+    }
+
+    return false;
+}
+
+
+function debeExportarMesaPorId(nombreMesa, idsPermitidos) {
+    if (!tieneFiltroIds(idsPermitidos)) {
+        return true;
+    }
+
+    var idMesa = normalizarIdCatalogo(nombreMesa);
+
+    if (!idMesa) {
+        return false;
+    }
+
+    return idsPermitidos[idMesa] === true;
+}
+
+
+function filtrarMesasPorIds(mesas, idsPermitidos) {
+    var filtradas = [];
+
+    for (var i = 0; i < mesas.length; i++) {
+        if (debeExportarMesaPorId(mesas[i].nombre, idsPermitidos)) {
+            filtradas.push(mesas[i]);
+        }
+    }
+
+    return filtradas;
+}
+
+
 function exportarPNG(rutaSalida) {
     var archivoSalida = new File(rutaSalida);
     var carpetaSalida = archivoSalida.parent;
@@ -88,6 +165,17 @@ function ocultarTodasLasMesas(doc) {
 }
 
 
+function restaurarMesasProducto(mesas, templateMesa) {
+    for (var i = 0; i < mesas.length; i++) {
+        mesas[i].capa.visible = true;
+    }
+
+    try {
+        app.activeDocument.layers.getByName(templateMesa).visible = false;
+    } catch (e) {}
+}
+
+
 function obtenerMesasProducto(doc, tipoMesa, templateMesa) {
     var mesas = [];
 
@@ -103,12 +191,10 @@ function obtenerMesasProducto(doc, tipoMesa, templateMesa) {
 
         var nombre = String(capa.name).toUpperCase();
 
-        // Ignorar template
         if (nombre === templateMesa || nombre.indexOf("TEMPLATE") !== -1) {
             continue;
         }
 
-        // Solo productos
         if (nombre.indexOf(tipoMesa) === -1) {
             continue;
         }
@@ -125,7 +211,6 @@ function obtenerMesasProducto(doc, tipoMesa, templateMesa) {
         });
     }
 
-    // Orden visual izquierda → derecha
     mesas.sort(function(a, b) {
         var toleranciaY = 30;
 
@@ -155,6 +240,7 @@ function main() {
     }
 
     var config = leerJSON(arguments[0]);
+    var idsPermitidos = crearSetIds(config.ids_catalogo || []);
 
     var doc = obtenerODocumentoAbierto(config.template_path);
     app.activeDocument = doc;
@@ -183,8 +269,10 @@ function main() {
     // MODO 2: EXPORTAR PRODUCTOS
     // =========================
 
-    var mesas = obtenerMesasProducto(doc, tipoMesa, templateMesa);
+    var todasLasMesas = obtenerMesasProducto(doc, tipoMesa, templateMesa);
+    var mesas = filtrarMesasPorIds(todasLasMesas, idsPermitidos);
 
+    logs.push("MESAS_PRODUCTO_EN_PSD: " + todasLasMesas.length);
     logs.push("MESAS_PRODUCTO_A_EXPORTAR: " + mesas.length);
 
     for (var i = 0; i < mesas.length; i++) {
@@ -206,16 +294,9 @@ function main() {
         logs.push("PRODUCTO_EXPORTADO: " + rutaSalida);
     }
 
-    // estado final
+    // Estado final: restaurar todas las mesas de producto visibles.
     ocultarTodasLasMesas(doc);
-
-    for (var j = 0; j < mesas.length; j++) {
-        mesas[j].capa.visible = true;
-    }
-
-    try {
-        doc.layers.getByName(templateMesa).visible = false;
-    } catch (e) {}
+    restaurarMesasProducto(todasLasMesas, templateMesa);
 
     return logs.join(" | ");
 }

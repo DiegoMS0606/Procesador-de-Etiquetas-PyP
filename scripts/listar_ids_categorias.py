@@ -163,6 +163,53 @@ def imprimir_resultado(resultado, vista="todo"):
         print(resultado["proximo"])
 
 
+def crear_carpeta_id(categoria_path: Path, id_catalogo: str):
+    img_dir = categoria_path / "img"
+    carpeta_act = img_dir / id_catalogo
+
+    if not img_dir.exists():
+        print(f"❌ No existe carpeta img/: {img_dir}")
+        return False
+
+    if carpeta_act.exists():
+        print(f"⚠ La carpeta ya existe: {carpeta_act}")
+        return False
+
+    carpeta_act.mkdir(parents=True, exist_ok=False)
+
+    print(f"\n✔ Carpeta creada:")
+    print(carpeta_act)
+    print("\nAhora coloca ahí las imágenes del producto.")
+    print("Recomendado:")
+    print(f"{carpeta_act}\\principal.png")
+    print(f"{carpeta_act}\\1.png")
+    print(f"{carpeta_act}\\2.png")
+
+    return True
+
+
+def preguntar_crear_proximo_id(categoria_path: Path, resultado, vista):
+    if vista != "proximo":
+        return
+
+    if resultado["errores"]:
+        return
+
+    id_proximo = resultado["proximo"]
+
+    confirmar = (
+        input(f"\n¿Quieres crear la carpeta {id_proximo} ahora? [S/N]: ")
+        .strip()
+        .lower()
+    )
+
+    if confirmar not in ["s", "si", "sí", "y", "yes"]:
+        print("No se creó ninguna carpeta.")
+        return
+
+    crear_carpeta_id(categoria_path, id_proximo)
+
+
 def mostrar_categorias(categorias):
     print("\n--- CATEGORÍAS DISPONIBLES ---")
 
@@ -243,6 +290,8 @@ def ver_una_categoria(categorias):
     categoria = categorias[indices[0]]
     resultado = analizar_categoria(categoria)
     imprimir_resultado(resultado, vista=vista)
+
+    preguntar_crear_proximo_id(categoria, resultado, vista)
 
 
 def ver_varias_categorias(categorias):

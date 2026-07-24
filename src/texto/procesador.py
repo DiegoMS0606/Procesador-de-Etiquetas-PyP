@@ -51,8 +51,8 @@ import re
 
 SINONIMOS_ESTILO = [
     "con inspiración en",
-    "a manera de",
     "con influencia de",
+    "a manera de",
     "evocando",
     "siguiendo la línea de",
     "en diálogo con",
@@ -487,47 +487,114 @@ def balancear_comillas(texto):
     return texto
 
 
+PALABRAS_MEDIDA = (
+    "longitud|logitud|largo|alto|altura|fondo|ancho|" "diámetro|diametro|base"
+)
+
+PREFIJOS_NO_COMPONENTE = {
+    "medida",
+    "medidas",
+    "dimension",
+    "dimensión",
+    "dimensiones",
+    "altura",
+    "alto",
+    "longitud",
+    "logitud",
+    "largo",
+    "fondo",
+    "ancho",
+    "diametro",
+    "diámetro",
+}
+
+
 def es_medida(l):
-    l = l.lower()
+    l = str(l or "").lower()
 
     patrones = [
-        # 86cm, 86 cm, 1.20m
         r"\b\d+(?:[.,]\d+)?\s*cm\b",
         r"\b\d+(?:[.,]\d+)?\s*m\b",
-
-        # longitud 125, altura 75, fondo 40
-        r"\b(longitud|logitud|largo|alto|altura|fondo|ancho|diámetro|diametro|base)\b\s*:?\s*\d+",
-
-        # 125 longitud, 75 altura, 40 fondo
-        r"\b\d+(?:[.,]\d+)?\s*(cm|m)?\s*(de\s+)?\b(longitud|logitud|largo|alto|altura|fondo|ancho|diámetro|diametro|base)\b",
-
-        # 55cm x 55cm
+        rf"\b({PALABRAS_MEDIDA})\b\s*:?\s*\d+",
+        rf"\b\d+(?:[.,]\d+)?\s*(cm|m)?\s*(de\s+)?\b({PALABRAS_MEDIDA})\b",
         r"\b\d+(?:[.,]\d+)?\s*(cm|m)?\s*x\s*\d+(?:[.,]\d+)?\s*(cm|m)?\b",
+        # Caso conjunto:
+        # Mesa: 88cm longitud x 64cm fondo
+        # Sillas: 95cm altura
+        rf"^[a-záéíóúüñ\s]+:\s*.*(\d+(?:[.,]\d+)?\s*(cm|m)|\b({PALABRAS_MEDIDA})\b)",
     ]
 
     return any(re.search(p, l) for p in patrones)
 
-def formatear_medida(linea):
-    texto = linea.strip()
+
+def normalizar_cuerpo_medida(texto):
+    texto = str(texto or "").strip()
     texto = re.sub(r"\s+", " ", texto)
 
-    # Normalizar unidades: 86cm -> 86 cm
     texto = re.sub(
         r"(\d+(?:[.,]\d+)?)\s*cm\b",
         r"\1 cm",
         texto,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     texto = re.sub(
         r"(\d+(?:[.,]\d+)?)\s*m\b",
         r"\1 m",
         texto,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
-    # Normalizar multiplicación: 55 cm x 55 cm -> 55 cm × 55 cm
     texto = re.sub(r"\s+x\s+", " × ", texto, flags=re.IGNORECASE)
+    texto = re.sub(r"\s*:\s*", ": ", texto)
+
+    return texto.strip()
+
+
+def extraer_prefijo_componente_medida(texto):
+    """
+    Detecta casos como:
+    Mesa: 88cm longitud x 64cm fondo
+    Sillas: 95cm altura
+
+    Devuelve:
+    ("Mesa", "88cm longitud x 64cm fondo")
+    """
+
+    texto = str(texto or "").strip()
+
+    match = re.match(
+        r"^([a-záéíóúüñ][a-záéíóúüñ\s]{1,40})\s*:\s*(.+)$",
+        texto,
+        flags=re.IGNORECASE,
+    )
+
+    if not match:
+        return "", texto
+
+    prefijo = re.sub(r"\s+", " ", match.group(1)).strip()
+    cuerpo = match.group(2).strip()
+
+    prefijo_lower = prefijo.lower()
+
+    if prefijo_lower in PREFIJOS_NO_COMPONENTE:
+        return "", texto
+
+    if not re.search(r"\d", cuerpo):
+        return "", texto
+
+    return prefijo.capitalize(), cuerpo
+
+
+def formatear_medida(linea):
+    texto = limpiar_ruido_ocr(linea)
+    texto = normalizar_cuerpo_medida(texto)
+
+    prefijo, cuerpo = extraer_prefijo_componente_medida(texto)
+
+    if prefijo:
+        cuerpo = normalizar_cuerpo_medida(cuerpo)
+        return f"{prefijo}: {cuerpo}"
 
     equivalencias = {
         "longitud": "Longitud",
@@ -544,9 +611,9 @@ def formatear_medida(linea):
 
     # Caso especial: 55 cm × 55 cm base
     m = re.search(
-        r"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*×\s*(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*base",
+        r"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*×\s*" r"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*base",
         texto,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     if m:
@@ -556,11 +623,11 @@ def formatear_medida(linea):
         u2 = m.group(4) or u1
         return f"Base: {n1} {u1} × {n2} {u2}"
 
-    # Caso: LONGITUD :125cm / Altura 75 cm
+    # Caso: LONGITUD: 125 cm / Altura 75 cm
     m = re.search(
-        r"\b(longitud|logitud|largo|alto|altura|fondo|ancho|diametro|diámetro|base)\b\s*:?\s*(\d+(?:[.,]\d+)?)\s*(cm|m)?",
+        rf"\b({PALABRAS_MEDIDA})\b\s*:?\s*(\d+(?:[.,]\d+)?)\s*(cm|m)?",
         texto,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     if m:
@@ -569,11 +636,11 @@ def formatear_medida(linea):
         unidad = m.group(3) or "cm"
         return f"{tipo}: {numero} {unidad}"
 
-    # Caso: 86cm longitud / 40cm fondo / 75cm altura
+    # Caso: 86 cm longitud / 40 cm fondo / 75 cm altura
     m = re.search(
-        r"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*(?:de\s+)?\b(longitud|logitud|largo|alto|altura|fondo|ancho|diametro|diámetro|base)\b",
+        rf"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*(?:de\s+)?\b({PALABRAS_MEDIDA})\b",
         texto,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     if m:
@@ -584,37 +651,42 @@ def formatear_medida(linea):
 
     return texto
 
+
 def extraer_medidas_de_linea(linea):
     """
     Extrae una o varias medidas desde una línea.
 
-    Ejemplos:
-    '90cm alto y 60cm fondo'
-    -> ['Altura: 90 cm', 'Fondo: 60 cm']
+    Casos:
+    Mesa: 88cm longitud x 64cm fondo
+    -> ['Mesa: 88 cm longitud × 64 cm fondo']
 
-    '125cm longitud'
-    -> ['Longitud: 125 cm']
+    Sillas: 95cm altura
+    -> ['Sillas: 95 cm altura']
+
+    90cm alto y 60cm fondo
+    -> ['Altura: 90 cm', 'Fondo: 60 cm']
     """
 
     texto = limpiar_ruido_ocr(linea)
     texto = normalizar_puntuacion(texto)
 
-    # Caso compuesto: 90cm alto y 60cm fondo
+    prefijo, cuerpo = extraer_prefijo_componente_medida(texto)
+
+    if prefijo:
+        return [formatear_medida(texto)]
+
     patron = re.compile(
-        r"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*(?:de\s+)?"
-        r"(longitud|logitud|largo|alto|altura|fondo|ancho|diametro|diámetro|base)",
+        rf"(\d+(?:[.,]\d+)?)\s*(cm|m)?\s*(?:de\s+)?({PALABRAS_MEDIDA})",
         flags=re.IGNORECASE,
     )
 
     coincidencias = list(patron.finditer(texto))
 
     if len(coincidencias) >= 2:
-        return [
-            formatear_medida(m.group(0))
-            for m in coincidencias
-        ]
+        return [formatear_medida(m.group(0)) for m in coincidencias]
 
     return [formatear_medida(texto)]
+
 
 def es_nota(l):
     claves = ["importado", "tesoro", "colección", "precio por cada", "precio individual", "artículo europeo"]
