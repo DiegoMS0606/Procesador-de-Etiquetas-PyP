@@ -562,22 +562,6 @@ def procesar_producto_catalogo(config, producto):
         print(f"❌ Error generando catálogo para {id_catalogo}: {e}")
         return False
 
-def exportar_si_corresponde(exportar_al_final, generados):
-    """
-    Exporta solo si el usuario lo pidió antes de generar
-    y si realmente se generó al menos un producto.
-    """
-
-    if not exportar_al_final:
-        return
-
-    if generados <= 0:
-        print("\nNo se exportó porque no se generó ningún producto.")
-        return
-
-    print("\nExportando catálogo a PDF...")
-    exportar_catalogo_pdf()
-
 
 def preguntar_exportar_catalogo_al_final():
     """
@@ -585,16 +569,36 @@ def preguntar_exportar_catalogo_al_final():
     La exportación automática será sin portada y solo con esos IDs.
     """
 
-    opcion = (
-        input(
-            "\n¿Quieres exportar a PDF al terminar la generación? "
-            "(solo estos productos, sin portada) [S/N]: "
-        )
-        .strip()
-        .lower()
-    )
+    print()
+    opcion = input(
+        "¿Quieres exportar a PDF al terminar la generación? "
+        "(solo estos productos, sin portada) [S/N]: "
+    ).strip().lower()
 
     return opcion in ["s", "si", "sí", "y", "yes"]
+
+
+def exportar_si_corresponde(exportar_al_final, ids_generados):
+    """
+    Exporta solo los productos generados en esta operación.
+    """
+
+    if not exportar_al_final:
+        return
+
+    if not ids_generados:
+        print()
+        print("No se exportó porque no se generó ningún producto.")
+        return
+
+    print()
+    print("Exportando a PDF solo los productos generados, sin portada...")
+
+    exportar_catalogo_pdf(
+        ids_catalogo=ids_generados,
+        preguntar_portada=False,
+    )
+
 
 def exportar_catalogo_manual():
     """
